@@ -221,7 +221,7 @@ if ns:
             return obj.isoformat()
         raise TypeError(f"Cannot serialize {type(obj)}")
     exp_report = copy.deepcopy(desired_state)
-    exp_report["checked_at"] = datetime(2024, 1, 15, 10, 30)
+    exp_report["checked_at"] = datetime(2026, 1, 15, 10, 30)
     exp_report["compliant"] = True
     exp_report_json = json.dumps(exp_report, default=_iac_default, indent=2, sort_keys=True)
 
@@ -233,7 +233,7 @@ if ns:
         ("Task 5", "normalized — standard interface model", ns.get("normalized"), exp_normalized, "Rename fields and convert VLAN with int(i['vlan']).", [("List comprehension", ["normalized = [", "    {'name': i['interface'], 'state': i['state'],", "     'vlan': int(i['vlan']), 'ip': i['eth_ip_addr']}", "    for i in rows", "]"])], "json.dumps(normalized, indent=2, sort_keys=True)"),
         ("Task 6", "up_interfaces and up_vlans — filtered automation decision data", (ns.get("up_interfaces"), ns.get("up_vlans")), (exp_up_interfaces, exp_up_vlans), "Filter state == 'up', then build sorted unique VLANs.", [("Filter and summarize", ["up_interfaces = [i for i in normalized if i['state'] == 'up']", "up_vlans = sorted({i['vlan'] for i in up_interfaces})"])], "(up_interfaces, up_vlans)"),
         ("Task 7", "desired_state_pretty_json and compact_payload — two JSON forms", (ns.get("desired_state_pretty_json"), ns.get("compact_payload")), (exp_desired_state_pretty_json, exp_compact_payload), "Use indent/sort_keys for pretty output and separators=(',', ':') for compact output.", [("Pretty and compact serialization", ["desired_state_pretty_json = json.dumps(desired_state, indent=2, sort_keys=True)", "compact_payload = json.dumps(desired_state, separators=(',', ':'))"])], "(desired_state_pretty_json, compact_payload)"),
-        ("Task 8", "report_json — compliance report with serialized datetime", ns.get("report_json"), exp_report_json, "Use copy.deepcopy, add checked_at and compliant, and serialize datetime with default=.", [("Deep copy plus default", ["def iac_default(obj):", "    if isinstance(obj, datetime):", "        return obj.isoformat()", "    raise TypeError(f'Cannot serialize {type(obj)}')", "", "report = copy.deepcopy(desired_state)", "report['checked_at'] = datetime(2024, 1, 15, 10, 30)", "report['compliant'] = True", "report_json = json.dumps(report, default=iac_default, indent=2, sort_keys=True)"])], "report_json"),
+        ("Task 8", "report_json — compliance report with serialized datetime", ns.get("report_json"), exp_report_json, "Use copy.deepcopy, add checked_at and compliant, and serialize datetime with default=.", [("Deep copy plus default", ["def iac_default(obj):", "    if isinstance(obj, datetime):", "        return obj.isoformat()", "    raise TypeError(f'Cannot serialize {type(obj)}')", "", "report = copy.deepcopy(desired_state)", "report['checked_at'] = datetime(2026, 1, 15, 10, 30)", "report['compliant'] = True", "report_json = json.dumps(report, default=iac_default, indent=2, sort_keys=True)"])], "report_json"),
     ])
 
 pause()

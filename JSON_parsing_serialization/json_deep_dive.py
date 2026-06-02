@@ -358,10 +358,6 @@ blank()
 pause()
 
 section("3.2 — Compact JSON for API transport")
-
-explain("The source variable for this task is desired_state from the solution file.")
-blank()
-cmd("desired_state = {'site': 'NYC', 'device': 'nyc-rtr-01', ...}")
 blank()
 explain("Pretty JSON is best for humans and git diffs.")
 explain("Compact JSON is useful when sending API payloads.")
@@ -379,9 +375,6 @@ blank()
 pause()
 
 section("3.3 — Serialize datetime safely")
-
-explain("The source variable for this task is desired_state, then report is built from it.")
-blank()
 cmd("report = copy.deepcopy(desired_state)")
 blank()
 explain("Some Python objects are not valid JSON by default.")
@@ -404,8 +397,8 @@ def iac_default(obj):
 
 cmd("report = copy.deepcopy(desired_state)")
 report = copy.deepcopy(desired_state)
-cmd("report['checked_at'] = datetime(2024, 1, 15, 10, 30)")
-report["checked_at"] = datetime(2024, 1, 15, 10, 30)
+cmd("report['checked_at'] = datetime(2026, 1, 15, 10, 30)")
+report["checked_at"] = datetime(2026, 1, 15, 10, 30)
 cmd("report['compliant'] = True")
 report["compliant"] = True
 cmd("report_json = json.dumps(report, default=iac_default, indent=2, sort_keys=True)")
