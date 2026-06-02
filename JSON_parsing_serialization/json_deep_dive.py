@@ -23,6 +23,10 @@ def pause():
 def cmd(command):
     print(f"    {CYAN}>>> {command}{RESET}")
 
+def show_code_block(lines):
+    for line in lines:
+        cmd(line)
+
 def out(value):
     print(f"    {GREEN}{value}{RESET}")
 
@@ -99,7 +103,6 @@ explain("  1. Parse JSON from an API or file")
 explain("  2. Read or transform the data")
 explain("  3. Serialize clean JSON back to an API or file")
 blank()
-
 pause()
 
 section("1.2 — JSON types map directly to Python types")
@@ -119,6 +122,16 @@ explain("Before saving it or sending it to an API, you need to understand")
 explain("how Python values will appear when converted into JSON.")
 blank()
 
+show_code_block([
+    "payload = {",
+    "    \"hostname\": \"nyc-rtr-01\",",
+    "    \"platform\": \"IOS-XE\",",
+    "    \"enabled\": True,",
+    "    \"mgmt_ip\": \"10.0.0.1\",",
+    "    \"vlans\": [10, 20, 30],",
+    "    \"last_backup\": None,",
+    "}",
+])
 payload = {
     "hostname": "nyc-rtr-01",
     "platform": "IOS-XE",
@@ -127,10 +140,12 @@ payload = {
     "vlans": [10, 20, 30],
     "last_backup": None,
 }
-cmd("payload = {'hostname': 'nyc-rtr-01', 'platform': 'IOS-XE', ...}")
-cmd("print(json.dumps(payload, indent=2, sort_keys=True))")
+cmd("payload_pretty_json = json.dumps(payload, indent=2, sort_keys=True)")
+payload_pretty_json = json.dumps(payload, indent=2, sort_keys=True)
+cmd("print(payload_pretty_json)")
 blank()
-show_json(payload)
+for line in payload_pretty_json.splitlines():
+    out(line)
 blank()
 
 pause()
@@ -142,6 +157,17 @@ explain("a JSON response body as text. You need to parse that text before")
 explain("you can read fields like hostname or interface name.")
 blank()
 
+show_code_block([
+    "api_response = '''{",
+    "  \"hostname\": \"nyc-rtr-01\",",
+    "  \"platform\": \"IOS-XE\",",
+    "  \"status\": \"up\",",
+    "  \"interfaces\": [",
+    "    {\"name\": \"Gi0/0\", \"state\": \"up\", \"vlan\": 10},",
+    "    {\"name\": \"Gi0/1\", \"state\": \"down\", \"vlan\": 20}",
+    "  ]",
+    "}'''",
+])
 api_response = '''{
   "hostname": "nyc-rtr-01",
   "platform": "IOS-XE",
@@ -161,10 +187,14 @@ cmd("print(json.dumps(device, indent=2, sort_keys=True))")
 blank()
 show_json(device)
 blank()
-cmd("print(device['hostname'])")
-out(device["hostname"])
-cmd("print(device['interfaces'][0]['name'])")
-out(device["interfaces"][0]["name"])
+cmd("device_hostname = device['hostname']")
+device_hostname = device["hostname"]
+cmd("first_interface_name = device['interfaces'][0]['name']")
+first_interface_name = device["interfaces"][0]["name"]
+cmd("print(device_hostname)")
+out(device_hostname)
+cmd("print(first_interface_name)")
+out(first_interface_name)
 blank()
 
 pause()
@@ -181,6 +211,17 @@ explain("TABLE_interface and ROW_interface. Your first job is to navigate")
 explain("through the wrapper and reach the useful interface rows.")
 blank()
 
+show_code_block([
+    "nxos_json = json.dumps({",
+    "    \"TABLE_interface\": {",
+    "        \"ROW_interface\": [",
+    "            {\"interface\": \"Ethernet1/1\", \"state\": \"up\", \"vlan\": \"10\", \"eth_ip_addr\": \"10.0.0.1\"},",
+    "            {\"interface\": \"Ethernet1/2\", \"state\": \"down\", \"vlan\": \"20\", \"eth_ip_addr\": \"10.0.1.1\"},",
+    "            {\"interface\": \"Ethernet1/3\", \"state\": \"up\", \"vlan\": \"30\", \"eth_ip_addr\": \"10.0.2.1\"},",
+    "        ]",
+    "    }",
+    "})",
+])
 nxos_json = json.dumps({
     "TABLE_interface": {
         "ROW_interface": [
@@ -207,6 +248,10 @@ pause()
 
 section("2.2 — Normalize vendor data into your internal model")
 
+explain("The source variable for this task is the rows variable created in the previous step.")
+blank()
+cmd("rows = data['TABLE_interface']['ROW_interface']")
+blank()
 explain("IaC code is easier when every vendor response becomes a standard shape.")
 explain("Here, VLAN is converted from string to integer and fields are renamed.")
 blank()
@@ -237,6 +282,14 @@ pause()
 
 section("2.3 — Filter parsed JSON for automation decisions")
 
+explain("The source variable for this task is the normalized variable created in the previous step.")
+blank()
+cmd("normalized = [")
+cmd("    {'name': i['interface'], 'state': i['state'],")
+cmd("     'vlan': int(i['vlan']), 'ip': i['eth_ip_addr']}")
+cmd("    for i in rows")
+cmd("]")
+blank()
 explain("After parsing, JSON data is normal Python data.")
 explain("Use normal list/dict logic to decide what IaC should change.")
 blank()
@@ -274,6 +327,17 @@ explain("you describe the intended configuration as structured data. That")
 explain("desired state can then be sent to an API or stored in Git.")
 blank()
 
+show_code_block([
+    "desired_state = {",
+    "    \"site\": \"NYC\",",
+    "    \"device\": \"nyc-rtr-01\",",
+    "    \"intended_config\": {",
+    "        \"ntp_servers\": [\"10.0.0.100\", \"10.0.0.101\"],",
+    "        \"dns_servers\": [\"8.8.8.8\", \"1.1.1.1\"],",
+    "        \"vlans\": [10, 20, 30],",
+    "    },",
+    "}",
+])
 desired_state = {
     "site": "NYC",
     "device": "nyc-rtr-01",
@@ -283,12 +347,11 @@ desired_state = {
         "vlans": [10, 20, 30],
     },
 }
-cmd("desired_state = {'site': 'NYC', 'device': 'nyc-rtr-01', ...}")
-cmd("payload_json = json.dumps(desired_state, indent=2, sort_keys=True)")
-payload_json = json.dumps(desired_state, indent=2, sort_keys=True)
-cmd("print(payload_json)")
+cmd("desired_state_pretty_json = json.dumps(desired_state, indent=2, sort_keys=True)")
+desired_state_pretty_json = json.dumps(desired_state, indent=2, sort_keys=True)
+cmd("print(desired_state_pretty_json)")
 blank()
-for line in payload_json.splitlines():
+for line in desired_state_pretty_json.splitlines():
     out(line)
 blank()
 
@@ -296,6 +359,10 @@ pause()
 
 section("3.2 — Compact JSON for API transport")
 
+explain("The source variable for this task is desired_state from the solution file.")
+blank()
+cmd("desired_state = {'site': 'NYC', 'device': 'nyc-rtr-01', ...}")
+blank()
 explain("Pretty JSON is best for humans and git diffs.")
 explain("Compact JSON is useful when sending API payloads.")
 blank()
@@ -313,6 +380,10 @@ pause()
 
 section("3.3 — Serialize datetime safely")
 
+explain("The source variable for this task is desired_state, then report is built from it.")
+blank()
+cmd("report = copy.deepcopy(desired_state)")
+blank()
 explain("Some Python objects are not valid JSON by default.")
 explain("For IaC reports, datetime must be converted to a string.")
 blank()
@@ -331,10 +402,12 @@ def iac_default(obj):
         return obj.isoformat()
     raise TypeError(f"Cannot serialize {type(obj)}")
 
+cmd("report = copy.deepcopy(desired_state)")
 report = copy.deepcopy(desired_state)
-report["checked_at"] = datetime(2024, 1, 15, 10, 30)
-report["compliant"] = True
 cmd("report['checked_at'] = datetime(2024, 1, 15, 10, 30)")
+report["checked_at"] = datetime(2024, 1, 15, 10, 30)
+cmd("report['compliant'] = True")
+report["compliant"] = True
 cmd("report_json = json.dumps(report, default=iac_default, indent=2, sort_keys=True)")
 report_json = json.dumps(report, default=iac_default, indent=2, sort_keys=True)
 cmd("print(report_json)")

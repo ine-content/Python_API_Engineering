@@ -12,7 +12,7 @@ DEVICE_PASSWORD = os.environ.get("DEVICE_PASSWORD")
 # Combine username and password as username:password
 # ==========================================================
 
-cat8k_username_password = None
+cat8k_username_password = f"{DEVICE_USERNAME}:{DEVICE_PASSWORD}"
 
 # ==========================================================
 # TODO 2 - Build encoded_credentials
