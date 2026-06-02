@@ -276,6 +276,11 @@ devices:
     ip: 10.2.0.1
     vlans: [30, 40, 50]
 """
+cmd('inventory_yaml = """')
+yaml_block(inventory_yaml.rstrip())
+cmd('"""')
+blank()
+
 inv_path = demo("inventory.yaml")
 with open(inv_path, "w") as f:
     f.write(inventory_yaml)
@@ -301,6 +306,10 @@ explain("Use sort_keys=False when you want key order to stay natural.")
 blank()
 explain("Scenario: Automation enriches device data with a VLAN count and")
 explain("writes a new YAML report that humans can review.")
+blank()
+
+cmd("inventory['devices'] =")
+show_yaml(inventory["devices"])
 blank()
 
 report = []
@@ -494,6 +503,9 @@ explain("Scenario: A field that looks like a string may be parsed as a boolean."
 blank()
 
 bad_yaml = "country: NO\nenabled: yes\nport_state: on"
+cmd("bad_yaml = \"country: NO\\\\nenabled: yes\\\\nport_state: on\"")
+yaml_block(bad_yaml)
+blank()
 cmd("parsed = yaml.safe_load('country: NO\\nenabled: yes\\nport_state: on')")
 parsed_bad = yaml.safe_load(bad_yaml)
 cmd("print(parsed)")
@@ -502,6 +514,9 @@ blank()
 explain("Fix: quote values that must stay strings.")
 blank()
 fixed_yaml = "country: 'NO'\nenabled: 'yes'\nport_state: 'on'"
+cmd("fixed_yaml = \"country: 'NO'\\\\nenabled: 'yes'\\\\nport_state: 'on'\"")
+yaml_block(fixed_yaml)
+blank()
 cmd("parsed = yaml.safe_load(\"country: 'NO'\\nenabled: 'yes'\\nport_state: 'on'\")")
 parsed_fixed = yaml.safe_load(fixed_yaml)
 cmd("print(parsed)")
