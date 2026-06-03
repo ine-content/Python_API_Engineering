@@ -363,6 +363,10 @@ inventory_devices = [
         "vlans": [10, 20],
     },
 ]
+cmd("inventory_devices =")
+show_yaml(inventory_devices)
+blank()
+
 platform_map = {"IOS-XE": "ios", "NX-OS": "nxos", "ASA": "asa"}
 host_vars_dir = demo("host_vars")
 os.makedirs(host_vars_dir, exist_ok=True)
