@@ -719,17 +719,53 @@ pause()
 chapter(3, "HTTP Mechanics in Automation")
 
 section("3.1 — Choosing the right verb")
-explain("Automation often starts by choosing the correct HTTP verb.")
+explain("Chapter 3 now follows one complete workflow from start to finish.")
 blank()
-explain("The source-of-truth can describe business intent.")
-explain("Automation maps that intent to an HTTP method.")
+explain("Goal: retrieve the interface status of a device from a Cisco-style API.")
+blank()
+explain("Before automation builds a request, it must choose the correct HTTP verb.")
+explain("Because this workflow reads existing information, the correct verb is GET.")
+blank()
+
+interface_status_intent_json = """{
+  "workflow": "retrieve_interface_status",
+  "device_name": "nyc-access-01",
+  "device_id": "device-101",
+  "site": "New York",
+  "api_base_path": "/dna/intent/api/v1/network-device",
+  "api_host": "yourdomain.com",
+  "auth_token": "XYZ123"
+}"""
+
+explain("Contents of interface_status_intent.json:")
+blank()
+block(interface_status_intent_json)
+blank()
+
+explain("The real automation code would open interface_status_intent.json like this:")
+blank()
+cmd("with open('interface_status_intent.json') as file:")
+cmd("    interface_status_intent = json.load(file)")
+blank()
+
+explain("For this standalone deep dive, we convert the same JSON text directly.")
+blank()
+cmd("interface_status_intent = json.loads(interface_status_intent_json)")
+interface_status_intent = json.loads(interface_status_intent_json)
+blank()
+
+cmd("print(interface_status_intent)")
+out(interface_status_intent)
+blank()
+
+explain("Map the workflow intent to an HTTP method.")
 blank()
 
 intent_to_method_json = """{
-  "read_device": "GET",
+  "retrieve_interface_status": "GET",
   "create_device": "POST",
   "replace_device": "PUT",
-  "update_description": "PATCH",
+  "update_interface_description": "PATCH",
   "remove_device": "DELETE"
 }"""
 
@@ -738,150 +774,208 @@ blank()
 block(intent_to_method_json)
 blank()
 
-explain("The real automation code would open intent_to_method.json like this:")
-blank()
-cmd("with open('intent_to_method.json') as file:")
-cmd("    intent_to_method = json.load(file)")
-blank()
-
-explain("For this standalone deep dive, we convert the same JSON text directly.")
-blank()
 cmd("intent_to_method = json.loads(intent_to_method_json)")
 intent_to_method = json.loads(intent_to_method_json)
 blank()
 
-cmd("print(intent_to_method)")
-out(intent_to_method)
+cmd("method = intent_to_method[interface_status_intent['workflow']]")
+method = intent_to_method[interface_status_intent["workflow"]]
 blank()
-cmd("print(intent_to_method['update_description'])")
-out(intent_to_method["update_description"])
+
+cmd("print(method)")
+out(method)
+blank()
+
+explain("GET is correct because the workflow is retrieving status data.")
+explain("Nothing is being created, replaced, updated, or deleted.")
 pause()
 
-section("3.2 — Building request dictionaries")
-explain("A request dictionary is a simple way to model what your API call will send.")
+section("3.2 — Building the interface-status request")
+explain("Now automation can build the actual HTTP request dictionary.")
 blank()
-explain("The source-of-truth should contain intent data.")
-explain("Automation uses that intent to build the PATCH request.")
+explain("The request needs a method, path, headers, and body.")
+explain("Because this is a GET request, there is no JSON body to send.")
+blank()
+explain("The source-of-truth gave us the device ID and API base path.")
+explain("Automation uses those values to build the endpoint.")
 blank()
 
-description_update_intent_json = """{
-  "device_name": "nyc-rtr-01",
-  "description": "Updated by automation",
-  "api_base_path": "/api/v1/devices",
-  "api_host": "yourdomain.com",
-  "auth_token": "XYZ123"
+cmd("device_id = interface_status_intent['device_id']")
+device_id = interface_status_intent["device_id"]
+cmd("base_path = interface_status_intent['api_base_path']")
+base_path = interface_status_intent["api_base_path"]
+blank()
+
+cmd("path = f\"{base_path}/{device_id}/interfaces/status\"")
+path = f"{base_path}/{device_id}/interfaces/status"
+blank()
+
+cmd("print(path)")
+out(path)
+blank()
+
+explain("Now build the request dictionary that an API client could send.")
+blank()
+
+cmd("interface_status_request = {")
+cmd("    'method': method,")
+cmd("    'path': path,")
+cmd("    'headers': {")
+cmd("        'Host': interface_status_intent['api_host'],")
+cmd("        'Accept': 'application/json',")
+cmd("        'Authorization': f\"Bearer {interface_status_intent['auth_token']}\"")
+cmd("    },")
+cmd("    'body': None")
+cmd("}")
+
+interface_status_request = {
+    "method": method,
+    "path": path,
+    "headers": {
+        "Host": interface_status_intent["api_host"],
+        "Accept": "application/json",
+        "Authorization": f"Bearer {interface_status_intent['auth_token']}",
+    },
+    "body": None,
+}
+blank()
+
+cmd("print(interface_status_request)")
+out(interface_status_request)
+blank()
+
+cmd("print(interface_status_request['method'])")
+out(interface_status_request["method"])
+cmd("print(interface_status_request['path'])")
+out(interface_status_request["path"])
+cmd("print(interface_status_request['body'])")
+out(interface_status_request["body"])
+blank()
+
+explain("Conceptually, the API client would send this HTTP request:")
+blank()
+cmd("GET /dna/intent/api/v1/network-device/device-101/interfaces/status")
+cmd("Accept: application/json")
+cmd("Authorization: Bearer XYZ123")
+blank()
+
+explain("The important point is that the request was built from source-of-truth data.")
+explain("The workflow intent chose GET, and the device data built the path.")
+pause()
+
+section("3.3 — Reading and summarizing the interface-status response")
+explain("After the GET request is sent, the API returns an HTTP response.")
+blank()
+explain("The response includes a status code and a JSON body with interface data.")
+explain("Automation should inspect both before deciding what to do next.")
+blank()
+
+interface_status_response_json = """{
+  "status_code": 200,
+  "reason": "OK",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "device_name": "nyc-access-01",
+    "device_id": "device-101",
+    "interfaces": [
+      {
+        "name": "GigabitEthernet1",
+        "admin_status": "up",
+        "oper_status": "up",
+        "vlan": 10
+      },
+      {
+        "name": "GigabitEthernet2",
+        "admin_status": "up",
+        "oper_status": "down",
+        "vlan": 20
+      },
+      {
+        "name": "GigabitEthernet3",
+        "admin_status": "down",
+        "oper_status": "down",
+        "vlan": 30
+      }
+    ]
+  }
 }"""
 
-explain("Contents of description_update_intent.json:")
+explain("Contents of interface_status_response.json:")
 blank()
-block(description_update_intent_json)
-blank()
-
-explain("The real automation code would open description_update_intent.json like this:")
-blank()
-cmd("with open('description_update_intent.json') as file:")
-cmd("    update_intent = json.load(file)")
+block(interface_status_response_json)
 blank()
 
-explain("For this standalone deep dive, we convert the same JSON text directly.")
-blank()
-cmd("update_intent = json.loads(description_update_intent_json)")
-update_intent = json.loads(description_update_intent_json)
+explain("The real API client would receive this JSON response from the controller.")
+explain("Automation converts the response JSON into Python data.")
 blank()
 
-patch_request = {
-    "method": "PATCH",
-    "path": f"{update_intent['api_base_path']}/{update_intent['device_name']}",
-    "headers": {
-        "Host": update_intent["api_host"],
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": f"Bearer {update_intent['auth_token']}",
-    },
-    "body": {
-        "description": update_intent["description"],
-    },
+cmd("response = json.loads(interface_status_response_json)")
+response = json.loads(interface_status_response_json)
+blank()
+
+cmd("print(response['status_code'])")
+out(response["status_code"])
+cmd("print(response['reason'])")
+out(response["reason"])
+blank()
+
+explain("First, confirm that the HTTP request succeeded.")
+blank()
+
+cmd("request_succeeded = 200 <= response['status_code'] < 300")
+request_succeeded = 200 <= response["status_code"] < 300
+cmd("print(request_succeeded)")
+out(request_succeeded)
+blank()
+
+explain("Now inspect the interface data in the response body.")
+blank()
+
+cmd("interfaces = response['body']['interfaces']")
+interfaces = response["body"]["interfaces"]
+blank()
+
+cmd("up_interfaces = [i['name'] for i in interfaces if i['oper_status'] == 'up']")
+up_interfaces = [i["name"] for i in interfaces if i["oper_status"] == "up"]
+cmd("down_interfaces = [i['name'] for i in interfaces if i['oper_status'] == 'down']")
+down_interfaces = [i["name"] for i in interfaces if i["oper_status"] == "down"]
+cmd("unexpected_down = [i['name'] for i in interfaces if i['admin_status'] == 'up' and i['oper_status'] == 'down']")
+unexpected_down = [
+    i["name"]
+    for i in interfaces
+    if i["admin_status"] == "up" and i["oper_status"] == "down"
+]
+blank()
+
+cmd("print(up_interfaces)")
+out(up_interfaces)
+cmd("print(down_interfaces)")
+out(down_interfaces)
+cmd("print(unexpected_down)")
+out(unexpected_down)
+blank()
+
+explain("An interface that is administratively up but operationally down may need attention.")
+blank()
+
+summary = {
+    "device_name": response["body"]["device_name"],
+    "request_succeeded": request_succeeded,
+    "total_interfaces": len(interfaces),
+    "oper_up_count": len(up_interfaces),
+    "oper_down_count": len(down_interfaces),
+    "unexpected_down_interfaces": unexpected_down,
 }
-cmd("print(patch_request)")
-out(patch_request)
-blank()
-cmd("print(patch_request['method'])")
-out(patch_request["method"])
-cmd("print(patch_request['body']['description'])")
-out(patch_request["body"]["description"])
-blank()
 
-explain("This mirrors a real API call: method, endpoint, headers, and JSON body.")
-pause()
-
-section("3.3 — Summarizing API call results")
-explain("After several API calls, automation should summarize what happened.")
-blank()
-explain("The workflow result data can be stored as JSON.")
-explain("Automation loads those results and summarizes them.")
-blank()
-
-api_results_json = """[
-  {
-    "action": "read_device",
-    "method": "GET",
-    "status_code": 200
-  },
-  {
-    "action": "create_device",
-    "method": "POST",
-    "status_code": 201
-  },
-  {
-    "action": "update_description",
-    "method": "PATCH",
-    "status_code": 200
-  },
-  {
-    "action": "remove_lab_device",
-    "method": "DELETE",
-    "status_code": 204
-  },
-  {
-    "action": "read_missing_device",
-    "method": "GET",
-    "status_code": 404
-  }
-]"""
-
-explain("Contents of api_results.json:")
-blank()
-block(api_results_json)
-blank()
-
-explain("The real automation code would open api_results.json like this:")
-blank()
-cmd("with open('api_results.json') as file:")
-cmd("    api_results = json.load(file)")
-blank()
-
-explain("For this standalone deep dive, we convert the same JSON text directly.")
-blank()
-cmd("api_results = json.loads(api_results_json)")
-api_results = json.loads(api_results_json)
-blank()
-
-cmd("print(api_results)")
-out(api_results)
-blank()
-cmd("success_count = sum(1 for r in api_results if 200 <= r['status_code'] < 300)")
-success_count = sum(1 for r in api_results if 200 <= r["status_code"] < 300)
-cmd("failed_actions = [r['action'] for r in api_results if r['status_code'] >= 400]")
-failed_actions = [r["action"] for r in api_results if r["status_code"] >= 400]
-cmd("print(success_count)")
-out(success_count)
-cmd("print(failed_actions)")
-out(failed_actions)
-blank()
-
-summary = {"success_count": success_count, "failed_actions": failed_actions}
 cmd("summary")
 show_json(summary)
+blank()
+
+explain("This completes the flow:")
+explain("choose GET, build the request, read the response, and summarize status.")
+explain("That is the core HTTP loop used in API-driven network automation.")
 pause()
 
 bar = "█" * 62
@@ -895,7 +989,7 @@ print(f"{BOLD}{bar}{RESET}")
 blank()
 print(f"  {BOLD}Ch 1{RESET}   HTTP requests and verbs: GET, POST, PUT, PATCH, DELETE")
 print(f"  {BOLD}Ch 2{RESET}   HTTP responses and status code meaning")
-print(f"  {BOLD}Ch 3{RESET}   Choosing verbs, building requests, summarizing results")
+print(f"  {BOLD}Ch 3{RESET}   Complete flow: retrieve and summarize interface status")
 blank()
 print(f"  {WHITE}HTTP mechanics are the grammar of API automation: choose the")
 print(f"  right verb, send the right path and payload, then interpret the")
