@@ -1,6 +1,4 @@
-# API Workflow Fundamentals — Student Challenges
-# Cisco API Perspective
-# Scenario-based tasks mapped directly to api_workflow_deep_dive.py
+
 #
 # HOW IT WORKS:
 # 1. Read each scenario carefully
@@ -43,7 +41,7 @@ API_RESPONSES=[
 
 print(); bar="█"*70
 print(f"{BOLD}{bar}{RESET}"); print(f"{BOLD}{bar}{RESET}"); print()
-print(f"{BOLD}         API WORKFLOW FUNDAMENTALS — CHALLENGES{RESET}")
+print(f"{BOLD}         Client Side Engineering — CHALLENGES{RESET}")
 print(f"{BOLD}         Cisco API Scenario Practice{RESET}")
 print(); print(f"{BOLD}{bar}{RESET}"); print(f"{BOLD}{bar}{RESET}"); blank()
 explain("5 scenario-based tasks mapped directly to the DeepDive examples.")

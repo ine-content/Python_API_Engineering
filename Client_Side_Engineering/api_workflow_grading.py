@@ -65,7 +65,7 @@ def grade(checks):
     else: print(f"{BOLD}{YELLOW}  You scored {passed}/{total}. Review, fix, and re-run.{RESET}")
     print(); print(f"{BOLD}{bar}{RESET}"); print(f"{BOLD}{bar}{RESET}")
 print(); bar="█"*62
-print(f"{BOLD}{bar}{RESET}"); print(f"{BOLD}{bar}{RESET}"); print(); print(f"{BOLD}         API WORKFLOW FUNDAMENTALS — GRADER{RESET}"); print(f"{BOLD}         Cisco API Perspective{RESET}"); print(); print(f"{BOLD}{bar}{RESET}"); print(f"{BOLD}{bar}{RESET}"); blank(); explain("Grading your api_workflow_solution.py ..."); blank()
+print(f"{BOLD}{bar}{RESET}"); print(f"{BOLD}{bar}{RESET}"); print(); print(f"{BOLD}         Client Side Engineering — GRADER{RESET}"); print(f"{BOLD}         Cisco API Perspective{RESET}"); print(); print(f"{BOLD}{bar}{RESET}"); print(f"{BOLD}{bar}{RESET}"); blank(); explain("Grading your api_workflow_solution.py ..."); blank()
 work_dir=tempfile.mkdtemp(prefix="api_workflow_grade_"); ns=run_solution(work_dir)
 if ns:
     exp_get={"method":"GET","url":API_CONFIG["base_url"]+API_CONFIG["devices_path"],"headers":{"Accept":API_CONFIG["accept"],"X-Auth-Token":API_CONFIG["token"]},"body":None}
